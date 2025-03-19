@@ -28,9 +28,15 @@ type jwtService struct {
 	jwtPrivateKey  crypto.PrivateKey
 	jwtParser      *jwt.Parser
 	sessionService session.Service
+	config         JWTServiceConfig
 }
 
-func NewJWTService(keySeed []byte, sessionService session.Service) Service {
+type JWTServiceConfig struct {
+	Issuer   string
+	Audience []string
+}
+
+func NewJWTService(keySeed []byte, sessionService session.Service, config JWTServiceConfig) Service {
 	privKey := ed25519.NewKeyFromSeed(keySeed)
 	pubkey := privKey.Public()
 	return &jwtService{
@@ -38,6 +44,7 @@ func NewJWTService(keySeed []byte, sessionService session.Service) Service {
 		jwtPrivateKey:  privKey,
 		jwtParser:      jwt.NewParser(jwt.WithValidMethods([]string{jwt.SigningMethodEdDSA.Alg()})),
 		sessionService: sessionService,
+		config:         config,
 	}
 }
 
@@ -48,8 +55,8 @@ func (s *jwtService) IssueAuthorizationToken(
 	claims := jwtClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ID:        nanoid.RandomLongID(),
-			Issuer:    "authz",
-			Audience:  jwt.ClaimStrings{"clipleap-back.buildthis.app"},
+			Issuer:    s.config.Issuer,
+			Audience:  s.config.Audience,
 			ExpiresAt: jwt.NewNumericDate(t.Add(time.Hour * 24 * 7)),
 			NotBefore: jwt.NewNumericDate(t.Add(-time.Minute)),
 			IssuedAt:  jwt.NewNumericDate(t),

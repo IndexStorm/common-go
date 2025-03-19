@@ -12,9 +12,8 @@ type Service interface {
 }
 
 type IssueAuthorizationTokenRequest struct {
-	TokenType TokenType
-	Claims    interface{}
-	UserID    string
+	UserID string
+	Claims interface{}
 }
 
 type IssueAuthorizationTokenResponse struct {
