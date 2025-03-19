@@ -1,9 +1,9 @@
 package config
 
 type Database struct {
-	Host     string `env:"HOST,notEmpty,unset"`
-	Username string `env:"USERNAME,notEmpty,unset"`
-	Password string `env:"PASSWORD,notEmpty,unset"`
-	Database string `env:"DATABASE,notEmpty,unset"`
-	SSLMode  string `env:"SSL_MODE" envDefault:"require"`
+	Host     string `env:"DB_HOST,notEmpty,unset"`
+	Username string `env:"DB_USERNAME,notEmpty,unset"`
+	Password string `env:"DB_PASSWORD,notEmpty,unset"`
+	Database string `env:"DB_DATABASE,notEmpty,unset"`
+	SSLMode  string `env:"DB_SSL_MODE" envDefault:"require"`
 }

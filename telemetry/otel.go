@@ -29,19 +29,19 @@ type OtelOption interface {
 	apply(cfg *OtelConfig)
 }
 
-func InitOpenTelemetryFromEnv(ctx context.Context, appConfig config.AppInfo, opts ...OtelOption) error {
+func OtelInitFromEnv(ctx context.Context, appConfig config.AppInfo, opts ...OtelOption) error {
 	otelConfig := config.TryParseOpenTelemetry()
 	if otelConfig == nil {
 		return nil
 	}
-	return InitOpenTelemetry(ctx, OtelConfig{
+	return OtelInit(ctx, OtelConfig{
 		App:   appConfig,
 		Trace: otelConfig.Trace,
 		Meter: otelConfig.Meter,
 	}, opts...)
 }
 
-func InitOpenTelemetry(ctx context.Context, cfg OtelConfig, opts ...OtelOption) error {
+func OtelInit(ctx context.Context, cfg OtelConfig, opts ...OtelOption) error {
 	for _, opt := range opts {
 		opt.apply(&cfg)
 	}
@@ -59,8 +59,23 @@ func InitOpenTelemetry(ctx context.Context, cfg OtelConfig, opts ...OtelOption) 
 	}
 	if cfg.Meter != nil {
 		if err := otelInitMeterProvider(ctx, cfg); err != nil {
+			_ = OtelShutdownTracer(ctx) // Tracer might be already initialized
 			return fmt.Errorf("init meter provider: %w", err)
 		}
+	}
+	return nil
+}
+
+func OtelShutdownTracer(ctx context.Context) error {
+	if tp, ok := otel.GetTracerProvider().(*sdktrace.TracerProvider); ok {
+		return tp.Shutdown(ctx)
+	}
+	return nil
+}
+
+func OtelShutdownMeter(ctx context.Context) error {
+	if mp, ok := otel.GetMeterProvider().(*sdkmetric.MeterProvider); ok {
+		return mp.Shutdown(ctx)
 	}
 	return nil
 }
@@ -111,7 +126,7 @@ func otelInitTraceProvider(ctx context.Context, cfg OtelConfig) error {
 	var exporter *otlptrace.Exporter
 	if cfg.Trace.Method == config.OpenTelemetryMethodHTTP {
 		opts := []otlptracehttp.Option{
-			otlptracehttp.WithEndpoint(cfg.Trace.Endpoint),
+			otlptracehttp.WithEndpointURL(cfg.Trace.Endpoint),
 		}
 		if cfg.Trace.Insecure {
 			opts = append(opts, otlptracehttp.WithInsecure())
@@ -128,7 +143,7 @@ func otelInitTraceProvider(ctx context.Context, cfg OtelConfig) error {
 		exporter = exp
 	} else if cfg.Trace.Method == config.OpenTelemetryMethodGRPC {
 		opts := []otlptracegrpc.Option{
-			otlptracegrpc.WithEndpoint(cfg.Trace.Endpoint),
+			otlptracegrpc.WithEndpointURL(cfg.Trace.Endpoint),
 		}
 		if cfg.Trace.Insecure {
 			opts = append(opts, otlptracegrpc.WithInsecure())
@@ -161,7 +176,7 @@ func otelInitMeterProvider(ctx context.Context, cfg OtelConfig) error {
 	var exporter sdkmetric.Exporter
 	if cfg.Meter.Method == config.OpenTelemetryMethodHTTP {
 		opts := []otlpmetrichttp.Option{
-			otlpmetrichttp.WithEndpoint(cfg.Meter.Endpoint),
+			otlpmetrichttp.WithEndpointURL(cfg.Meter.Endpoint),
 		}
 		if cfg.Meter.Insecure {
 			opts = append(opts, otlpmetrichttp.WithInsecure())
@@ -178,7 +193,7 @@ func otelInitMeterProvider(ctx context.Context, cfg OtelConfig) error {
 		exporter = exp
 	} else if cfg.Meter.Method == config.OpenTelemetryMethodGRPC {
 		opts := []otlpmetricgrpc.Option{
-			otlpmetricgrpc.WithEndpoint(cfg.Meter.Endpoint),
+			otlpmetricgrpc.WithEndpointURL(cfg.Meter.Endpoint),
 		}
 		if cfg.Meter.Insecure {
 			opts = append(opts, otlpmetricgrpc.WithInsecure())
