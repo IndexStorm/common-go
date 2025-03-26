@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/rs/zerolog"
 )
@@ -36,6 +37,9 @@ func (p *postgresMigrator) runMigrations(config Config) error {
 		config.Database.Database,
 		config.Database.SSLMode,
 	)
+	if config.SchemaName != "" {
+		connStr += fmt.Sprintf("&currentSchema=%s", config.SchemaName)
+	}
 	if config.MigrationsTableQuoted != "" {
 		connStr += fmt.Sprintf("&x-migrations-table=%s&x-migrations-table-quoted=1", config.MigrationsTableQuoted)
 	}
