@@ -2,7 +2,11 @@ package telemetry
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"sync"
+	"time"
+
 	"github.com/IndexStorm/common-go/config"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
@@ -14,7 +18,6 @@ import (
 	sdkrsc "go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.30.0"
-	"time"
 )
 
 type OtelConfig struct {
@@ -78,6 +81,27 @@ func OtelShutdownMeter(ctx context.Context) error {
 		return mp.Shutdown(ctx)
 	}
 	return nil
+}
+
+func OtelShutdown(ctx context.Context) error {
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+	errCh := make(chan error, 2)
+	go func() {
+		defer wg.Done()
+		errCh <- OtelShutdownTracer(ctx)
+	}()
+	go func() {
+		defer wg.Done()
+		errCh <- OtelShutdownMeter(ctx)
+	}()
+	wg.Wait()
+	close(errCh)
+	var errs []error
+	for err := range errCh {
+		errs = append(errs, err)
+	}
+	return errors.Join(errs...)
 }
 
 func OtelWithResource(resource *sdkrsc.Resource) OtelOption {
