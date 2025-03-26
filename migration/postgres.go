@@ -37,8 +37,8 @@ func (p *postgresMigrator) runMigrations(config Config) error {
 		config.Database.Database,
 		config.Database.SSLMode,
 	)
-	if config.SchemaName != "" {
-		connStr += fmt.Sprintf("&currentSchema=%s", config.SchemaName)
+	if config.SearchPath != "" {
+		connStr += fmt.Sprintf("&search_path=%s", config.SearchPath)
 	}
 	if config.MigrationsTableQuoted != "" {
 		connStr += fmt.Sprintf("&x-migrations-table=%s&x-migrations-table-quoted=1", config.MigrationsTableQuoted)

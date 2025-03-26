@@ -6,6 +6,6 @@ type Config struct {
 	Database              config.Database
 	ForceVersion          int    `env:"FORCE_VERSION"`
 	SqlSchemaDir          string `env:"SQL_SCHEMA_DIR,notEmpty"`
-	SchemaName            string `env:"SCHEMA_NAME"`
+	SearchPath            string `env:"SEARCH_PATH"`
 	MigrationsTableQuoted string `env:"MIGRATION_TABLE_QUOTED"`
 }
