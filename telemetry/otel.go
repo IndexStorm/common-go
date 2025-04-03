@@ -14,10 +14,12 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	metricnoop "go.opentelemetry.io/otel/metric/noop"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	sdkrsc "go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.30.0"
+	tracenoop "go.opentelemetry.io/otel/trace/noop"
 )
 
 type OtelConfig struct {
@@ -35,6 +37,7 @@ type OtelOption interface {
 func OtelInitFromEnv(ctx context.Context, appConfig config.AppInfo, opts ...OtelOption) error {
 	otelConfig := config.TryParseOpenTelemetry()
 	if otelConfig == nil {
+		OtelInitNoop()
 		return nil
 	}
 	return OtelInit(ctx, OtelConfig{
@@ -42,6 +45,11 @@ func OtelInitFromEnv(ctx context.Context, appConfig config.AppInfo, opts ...Otel
 		Trace: otelConfig.Trace,
 		Meter: otelConfig.Meter,
 	}, opts...)
+}
+
+func OtelInitNoop() {
+	otel.SetTracerProvider(tracenoop.NewTracerProvider())
+	otel.SetMeterProvider(metricnoop.NewMeterProvider())
 }
 
 func OtelInit(ctx context.Context, cfg OtelConfig, opts ...OtelOption) error {
