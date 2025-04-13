@@ -1,13 +1,21 @@
 package log
 
 import (
-	"github.com/rs/zerolog"
 	"io"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/rs/zerolog"
 )
+
+var DefaultRootRewrites = []string{
+	"cmd/",
+	"internal/",
+	"pkg/",
+	"testing/",
+}
 
 func NewZerologWithLevel(lvl zerolog.Level) zerolog.Logger {
 	zerolog.TimeFieldFormat = time.RFC3339
@@ -29,12 +37,7 @@ func NewZerologWithLevel(lvl zerolog.Level) zerolog.Logger {
 
 func SetupCallerRootRewrite(roots ...string) {
 	if len(roots) == 0 {
-		roots = []string{
-			"cmd/",
-			"internal/",
-			"pkg/",
-			"testing/",
-		}
+		roots = DefaultRootRewrites
 	}
 	zerolog.CallerMarshalFunc = func(pc uintptr, file string, line int) string {
 		for _, root := range roots {
