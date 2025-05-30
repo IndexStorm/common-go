@@ -4,11 +4,12 @@ import (
 	"context"
 	"crypto/x509"
 	"errors"
+	"runtime"
+	"time"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"runtime"
-	"time"
 )
 
 type PgxConnection interface {
@@ -31,10 +32,10 @@ var ErrTlsConfigRequired = errors.New("pgx:TLSConfig is required with CertPool")
 
 func NewPgxConnection(
 	ctx context.Context,
+	timeout time.Duration,
 	conn string,
 	tracer pgx.QueryTracer,
 	certPool *x509.CertPool,
-	timeout time.Duration,
 ) (*pgxpool.Pool, error) {
 	config, err := pgxpool.ParseConfig(conn)
 	if err != nil {
