@@ -6,11 +6,12 @@ import (
 	"crypto/ed25519"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/IndexStorm/common-go/nanoid"
 	"github.com/IndexStorm/common-go/service/authz/session"
 	"github.com/goccy/go-json"
 	"github.com/golang-jwt/jwt/v5"
-	"time"
 )
 
 type jwtClaims struct {
@@ -36,7 +37,7 @@ type JWTServiceConfig struct {
 	Audience []string
 }
 
-func NewJWTService(keySeed []byte, sessionService session.Service, config JWTServiceConfig) Service {
+func NewJWTService(config JWTServiceConfig, keySeed []byte, sessionService session.Service) Service {
 	privKey := ed25519.NewKeyFromSeed(keySeed)
 	pubkey := privKey.Public()
 	return &jwtService{
